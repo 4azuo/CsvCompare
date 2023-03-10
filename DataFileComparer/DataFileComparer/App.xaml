@@ -1,0 +1,16 @@
+﻿<Application x:Class="DataFileComparer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:DataFileComparer"
+             StartupUri="Windows/MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Templates/ButtonTemplates.xaml" />
+                <ResourceDictionary Source="/Templates/TextBoxTemplates.xaml" />
+                <ResourceDictionary Source="/Templates/ListViewTemplates.xaml" />
+                <ResourceDictionary Source="/Templates/DataGridTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,44 @@
+﻿<local:CWindow x:Class="DataFileComparer.ConfirmWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataFileComparer"
+        xmlns:com="clr-namespace:DataFileComparer.Commons"
+        x:TypeArguments="local:ConfirmWindowData"
+        mc:Ignorable="d"
+        Title="比較" Height="1000" Width="1600" FontFamily="Consolas" Icon="/DataFileComparer;component/Resources/app-icon.png">
+    <Window.Resources>
+        <SolidColorBrush x:Key="ButtonBackground" Color="White"/>
+        <SolidColorBrush x:Key="ButtonOveringBackground" Color="#FFC3FAFF"/>
+        <SolidColorBrush x:Key="ButtonPressingBackground" Color="#FF36C7E8"/>
+        <SolidColorBrush x:Key="ButtonDisabledBackground" Color="#AA000000"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+            <Button Content="エクスポート" Style="{StaticResource CustomContent_Square}" BorderBrush="Black" Background="{StaticResource ButtonBackground}" com:AttachedProperties.OveringBackground="{StaticResource ButtonOveringBackground}" com:AttachedProperties.PressingBackground="{StaticResource ButtonPressingBackground}" Margin="8" Height="40" Width="150" Click="Export"/>
+            <TextBlock Text="{Binding Mode.Value}" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </StackPanel>
+        <StackPanel Grid.Row="0" Grid.Column="1" FlowDirection="RightToLeft" Orientation="Horizontal">
+            <Button Content="フォーマット ‐ なし" Style="{StaticResource CustomContent_Square}" BorderBrush="Black" Background="{StaticResource ButtonBackground}" com:AttachedProperties.OveringBackground="{StaticResource ButtonOveringBackground}" com:AttachedProperties.PressingBackground="{StaticResource ButtonPressingBackground}" Margin="8" Height="40" Width="150" Click="FormatNone"/>
+            <Button Content="フォーマット ‐ ソート" Style="{StaticResource CustomContent_Square}" BorderBrush="Black" Background="{StaticResource ButtonBackground}" com:AttachedProperties.OveringBackground="{StaticResource ButtonOveringBackground}" com:AttachedProperties.PressingBackground="{StaticResource ButtonPressingBackground}" Margin="8" Height="40" Width="150" Click="FormatSort"/>
+            <Button Content="フォーマット ‐ 同行" Style="{StaticResource CustomContent_Square}" BorderBrush="Black" Background="{StaticResource ButtonBackground}" com:AttachedProperties.OveringBackground="{StaticResource ButtonOveringBackground}" com:AttachedProperties.PressingBackground="{StaticResource ButtonPressingBackground}" Margin="8" Height="40" Width="150" Click="FormatSameRow"/>
+        </StackPanel>
+        <GroupBox Grid.Row="1" Grid.Column="0" Header="{Binding OldFile.FilePath}">
+            <DataGrid x:Name="dgOldData" ScrollViewer.ScrollChanged="ScrollChanged" CanUserAddRows="False" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="False"
+                      SelectionChanged="SelectionChanged" SelectionMode="Single" SelectedItem="{Binding SelectedOldRow}" FontSize="10" RowStyle="{DynamicResource DataGridRowStyle}"/>
+        </GroupBox>
+        <GroupBox Grid.Row="1" Grid.Column="1" Header="{Binding NewFile.FilePath}">
+            <DataGrid x:Name="dgNewData" ScrollViewer.ScrollChanged="ScrollChanged" CanUserAddRows="False" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="False"
+                      SelectionChanged="SelectionChanged" SelectionMode="Single" SelectedItem="{Binding SelectedNewRow}" FontSize="10" RowStyle="{DynamicResource DataGridRowStyle}"/>
+        </GroupBox>
+    </Grid>
+</local:CWindow>
