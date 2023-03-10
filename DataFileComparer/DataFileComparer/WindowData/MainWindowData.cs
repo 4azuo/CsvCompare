@@ -2,10 +2,7 @@
 using DataFileComparer.Attributes;
 using DataFileComparer.Commons;
 using DataFileComparer.Entities;
-using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;

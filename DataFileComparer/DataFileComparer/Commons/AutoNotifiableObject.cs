@@ -16,8 +16,8 @@ namespace DataFileComparer.Commons
         /// <summary>
         /// Consts
         /// </summary>
-        public const int AUTO_RENOTIFY_PERIOD = 200;
-        public const int AUTO_RENOTIFY_MAX = 20;
+        public const int AUTO_RENOTIFY_PERIOD = 100;
+        public const int AUTO_RENOTIFY_MAX = 10;
 
         /// <summary>
         /// Events

@@ -1,6 +1,7 @@
 ﻿using DataFileComparer.Attributes;
 using DataFileComparer.Commons;
 using Newtonsoft.Json;
+using System.ComponentModel;
 using System.Windows;
 
 namespace DataFileComparer
@@ -24,12 +25,12 @@ namespace DataFileComparer
         /// Set parent window
         /// </summary>
         /// <param name="iWindow"></param>
-        public virtual void InitWindow(Window iWindow, bool allowLoad)
+        public virtual void InitWindow(Window iWindow, CancelEventArgs initDataFlg)
         {
             Window = iWindow;
 
             //load
-            if (allowLoad)
+            if (!initDataFlg.Cancel)
             {
                 Pause();
                 OnLoad();

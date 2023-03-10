@@ -1,11 +1,9 @@
 ﻿using Cm.CmCWPC.Com.Enum;
 using DataFileComparer.Entities;
 using IronXL;
-using IronXL.Options;
 using IronXL.Styles;
 using Microsoft.VisualBasic.FileIO;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;

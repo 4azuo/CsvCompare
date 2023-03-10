@@ -1,25 +1,12 @@
 ﻿using DataFileComparer.Commons;
 using DataFileComparer.Consts;
-using DataFileComparer.Entities;
-using Microsoft.Win32;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace DataFileComparer
 {
@@ -45,10 +32,7 @@ namespace DataFileComparer
 
         private void Reload(object sender, RoutedEventArgs e)
         {
-            if (IsProcessValid())
-            {
-                WindowData.OnLoad();
-            }
+            WindowData.OnLoad();
         }
 
         private bool IsProcessValid()
@@ -71,17 +55,19 @@ namespace DataFileComparer
             return true;
         }
 
-        public override MainWindowData InitData()
+        public override MainWindowData InitData(CancelEventArgs initDataFlg)
         {
             if (File.Exists(INIT_DATA_FILEPATH))
             {
-                InitLoadData = false;
+                initDataFlg.Cancel = true;
+
                 AutoNotifiableObject.Begin();
                 var data = JsonConvert.DeserializeObject<MainWindowData>(File.ReadAllText(INIT_DATA_FILEPATH), new JsonSerializerSettings
                 {
                     PreserveReferencesHandling = PreserveReferencesHandling.Objects,
                 });
                 AutoNotifiableObject.End();
+
                 return data;
             }
             return new MainWindowData();

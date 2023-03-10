@@ -13,13 +13,11 @@ namespace DataFileComparer
         /// </summary>
         [IgnoredProperty]
         public T WindowData { get; private set; }
-        [IgnoredProperty]
-        public bool InitLoadData { get; set; } = true;
 
         /// <summary>
         /// Events
         /// </summary>
-        public virtual T InitData() { return new T(); }
+        public virtual T InitData(CancelEventArgs e) { return new T(); }
         public virtual void ClosingWindow(object s, CancelEventArgs e) { }
 
         public CWindow()
@@ -27,12 +25,15 @@ namespace DataFileComparer
             GetType().GetMethod(COMP_INIT_METHOD).Invoke(this, null);
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
-            WindowData = InitData();
+            var initDataFlg = new CancelEventArgs(false);
+            WindowData = InitData(initDataFlg);
             DataContext = WindowData;
+            
             Loaded += (s, e) =>
             {
-                WindowData.InitWindow(this, InitLoadData);
+                WindowData.InitWindow(this, initDataFlg);
             };
+
             Closing += (s, e) =>
             {
                 ClosingWindow(s, e);

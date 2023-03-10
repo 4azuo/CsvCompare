@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace Cm.CmCWPC.Com.Enum
+﻿namespace Cm.CmCWPC.Com.Enum
 {
     public class FileExtEnum : EnumableObject
     {

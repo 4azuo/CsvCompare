@@ -1,10 +1,5 @@
 ﻿using Cm.CmCWPC.Com.Enum;
-using DataFileComparer.Attributes;
-using DataFileComparer.Commons;
 using DataFileComparer.Entities;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 namespace DataFileComparer
 {
