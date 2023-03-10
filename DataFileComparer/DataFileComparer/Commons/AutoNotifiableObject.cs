@@ -41,6 +41,7 @@ namespace DataFileComparer.Commons
 
         [JsonIgnore, IgnoredProperty]
         public static bool StaticLoad { get; private set; } = false;
+        [JsonIgnore, IgnoredProperty]
         public static List<AutoNotifiableObject> StaticLoadObjs { get; } = new List<AutoNotifiableObject>();
 
 
