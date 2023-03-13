@@ -1,5 +1,6 @@
 ﻿using DataFileComparer.Attributes;
 using DataFileComparer.Commons;
+using NPOI.HSSF.Util;
 using System;
 using System.Linq;
 using System.Windows;
@@ -31,6 +32,13 @@ namespace DataFileComparer.Entities
             get
             {
                 return IsKey ? Brushes.Aqua : Brushes.LightGray;
+            }
+        }
+        public short HSSFBackground
+        {
+            get
+            {
+                return IsKey ? HSSFColor.Aqua.Index : HSSFColor.Grey25Percent.Index;
             }
         }
 

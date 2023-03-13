@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using NPOI.HSSF.Util;
+using System.Collections.Generic;
 using System.Windows.Media;
 
 namespace DataFileComparer.Entities
@@ -23,6 +24,17 @@ namespace DataFileComparer.Entities
                 if (SameRow == null || SameRow.IsBlankRow)
                     return Brushes.LightGreen;
                 return Brushes.White;
+            }
+        }
+        public short HSSFBackground
+        {
+            get
+            {
+                if (IsBlankRow)
+                    return HSSFColor.Grey80Percent.Index;
+                if (SameRow == null || SameRow.IsBlankRow)
+                    return HSSFColor.LightGreen.Index;
+                return HSSFColor.White.Index;
             }
         }
         public List<DataFileContentCell> Cells { get; set; } = new List<DataFileContentCell>();

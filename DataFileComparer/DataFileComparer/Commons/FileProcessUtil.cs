@@ -1,12 +1,17 @@
 ﻿using Cm.CmCWPC.Com.Enum;
 using DataFileComparer.Entities;
-using IronXL;
-using IronXL.Styles;
+using ExcelDataReader;
 using Microsoft.VisualBasic.FileIO;
+using NPOI.XSSF.UserModel;
+using NPOI.SS.UserModel;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 
 namespace DataFileComparer.Commons
@@ -51,55 +56,59 @@ namespace DataFileComparer.Commons
         {
             var rs = new List<DataFileInterface>();
 
-            Tasks.Add(Task.Run(() =>
-            {
-                var wb = WorkBook.Load(df.FilePath);
-                foreach (var sheet in wb.WorkSheets)
+            //Tasks.Add(Task.Run(() =>
+            //{
+                using (var stream = File.Open(df.FilePath, FileMode.Open, FileAccess.Read))
                 {
-                    if (!IsInterfaceSheet(sheet["A1"].StringValue)) continue;
-                    var itf = new DataFileInterface();
-                    var items = GetSheetItems(sheet, itf);
-                    if (items.Count <= 0) continue;
+                    using (var reader = ExcelReaderFactory.CreateReader(stream))
+                    {
+                        var ds = reader.AsDataSet();
+                        foreach (DataTable sheet in ds.Tables)
+                        {
+                            if (!IsInterfaceSheet(sheet.GetValue("A1"))) continue;
+                            var itf = new DataFileInterface();
+                            var items = GetSheetItems(sheet, itf);
+                            if (items.Count <= 0) continue;
 
-                    itf.DataFile = df;
-                    itf.SheetName = sheet.Name.Trim();
-                    itf.SystemName = sheet["L2"].StringValue.Trim();
-                    itf.InterfaceName = sheet["AF2"].StringValue.Trim();
-                    itf.InterfaceId = sheet["J10"].StringValue.Trim();
-                    //itf.FileName = GetCellValue(cells.FirstOrDefault(x => x.CellReference == "AK10"), stringTablePart);
-                    //itf.Connection = GetCellValue(cells.FirstOrDefault(x => x.CellReference == "J11"), stringTablePart);
-                    //itf.Format = GetCellValue(cells.FirstOrDefault(x => x.CellReference == "AK11"), stringTablePart);
-                    itf.Delimiter = sheet["AK12"].StringValue.Trim();
-                    itf.Newline = sheet["AK13"].StringValue.Trim();
-                    itf.Items = items;
+                            itf.DataFile = df;
+                            itf.SheetName = sheet.TableName;
+                            itf.SystemName = sheet.GetValue("L2");
+                            itf.InterfaceName = sheet.GetValue("AF2");
+                            itf.InterfaceId = sheet.GetValue("J10");
+                            itf.FileName = sheet.GetValue("AK10");
+                            itf.Connection = sheet.GetValue("J11");
+                            itf.Format = sheet.GetValue("AK11");
+                            itf.Delimiter = sheet.GetValue("AK12");
+                            itf.Newline = sheet.GetValue("AK13");
+                            itf.Items = items;
 
-                    rs.Add(itf);
+                            rs.Add(itf);
+                        }
+                    }
                 }
-                wb.Close();
-            }));
+            //}));
 
             return rs;
         }
 
-        public static List<DataFileInterfaceItem> GetSheetItems(WorkSheet sheet, DataFileInterface itf)
+        public static List<DataFileInterfaceItem> GetSheetItems(DataTable sheet, DataFileInterface itf)
         {
             var lisItem = new List<DataFileInterfaceItem>();
             var sortIndex = 1;
-            
-            foreach (var row in sheet.Rows)
+
+            for (int r = 18; r < sheet.Rows.Count; r++)
             {
-                if (row.RangeAddress.FirstRow < 18)
-                    continue;
-                
-                var itemName = row.AllColumnsInRange[4].StringValue;
+                var row = sheet.Rows[r];
+
+                var itemName = row[4].Parse<string>();
                 if (itemName.Contains("改行コード"))
                     break;
-                
-                var isKey = !string.IsNullOrEmpty(row.AllColumnsInRange[2].StringValue);
-                var type = row.AllColumnsInRange[24].StringValue.Contains("文字型") == true ? typeof(string) : typeof(double);
-                //var length = ParseUtil.Parse<int>(GetCellValue(cells[29], stringTablePart));
-                //var byteLength = ParseUtil.Parse<int>(GetCellValue(cells[32], stringTablePart));
-                var isRequired = !string.IsNullOrEmpty(row.AllColumnsInRange[35].StringValue);
+
+                var isKey = !string.IsNullOrEmpty(row[2].Parse<string>());
+                var type = row[24].Parse<string>().Contains("文字型") == true ? typeof(string) : typeof(double);
+                var length = row[29].Parse<int>();
+                var byteLength = row[32].Parse<int>();
+                var isRequired = !string.IsNullOrEmpty(row[35].Parse<string>());
 
                 var i = new DataFileInterfaceItem();
                 i.Pause();
@@ -109,8 +118,8 @@ namespace DataFileComparer.Commons
                 i.ItemName = itemName;
                 i.IsKey = isKey;
                 i.Type = type;
-                //i.Length = length;
-                //i.ByteLength = byteLength;
+                i.Length = length;
+                i.ByteLength = byteLength;
                 i.IsRequired = isRequired;
                 i.SortIndex = isKey ? sortIndex++ : 0;
 
@@ -153,82 +162,78 @@ namespace DataFileComparer.Commons
             var colCount = result.Interface.Items.Count;
             const int SEP_COL_COUNT = 3;
 
-            var wb = WorkBook.Create(ExcelFileFormat.XLSX);
-            var sheet = wb.CreateWorkSheet("比較結果");
-            sheet.SetZoom(40);
-
-            //interface
-            sheet.SetCellValue(0, 0, "インタフェース");
-            sheet.SetCellValue(1, 0, result.Interface.DataFile.FilePath);
-            sheet.SetCellValue(2, 0, result.Interface.InterfaceName);
-            sheet.SetCellValue(3, 0, result.Interface.InterfaceId);
-
-            //data info
-            sheet.SetCellValue(5, 0, "現世代");
-            sheet.SetCellValue(6, 0, result.OldFile.FilePath);
-            sheet.SetCellValue(5, 0 + colCount + SEP_COL_COUNT, "次世代");
-            sheet.SetCellValue(6, 0 + colCount + SEP_COL_COUNT, result.NewFile.FilePath);
-            
-            //data
-            const int FROM_ROW_INDEX = 8;
-            const int FROM_COL_INDEX = 1;
-
-            //header
-            foreach (var col in result.Interface.Items)
+            using (var wb = new XSSFWorkbook())
             {
-                var rowIndex = FROM_ROW_INDEX;
-                var colIndex = FROM_COL_INDEX + col.ItemIndex;
-                sheet.SetCellValue(rowIndex, colIndex, col.ItemName);
+                var sheet = wb.CreateSheet("比較結果");
+                sheet.SetZoom(40);
 
-                var sheetCell = sheet.GetCellAt(rowIndex, colIndex);
-                SetBorder(sheetCell);
-                SetBackgroundColor(sheetCell, col.Background);
-            }
-            //data
-            foreach (var row in result.OldFileContent.Rows)
-            {
-                foreach (var col in result.Interface.Items)
+                //interface
+                sheet.GetCell(0, 0).SetCellValue("インタフェース");
+                sheet.GetCell(1, 0).SetCellValue(result.Interface.DataFile.FilePath);
+                sheet.GetCell(2, 0).SetCellValue(result.Interface.InterfaceName);
+                sheet.GetCell(3, 0).SetCellValue(result.Interface.InterfaceId);
+
+                //data info
+                sheet.GetCell(5, 0).SetCellValue("現世代");
+                sheet.GetCell(6, 0).SetCellValue(result.OldFile.FilePath);
+                sheet.GetCell(5, 0 + colCount + SEP_COL_COUNT).SetCellValue("次世代");
+                sheet.GetCell(6, 0 + colCount + SEP_COL_COUNT).SetCellValue(result.NewFile.FilePath);
+
+                //data
+                const int FROM_ROW_INDEX = 8;
+                const int FROM_COL_INDEX = 1;
+
+                //data
+                foreach (var row in result.OldFileContent.Rows)
                 {
-                    var cell = row.GetCell(col.ItemIndex);
-                    var rowIndex = 1 + FROM_ROW_INDEX + row.RowIndex;
-                    var colIndex = FROM_COL_INDEX + cell.CellIndex;
-                    sheet.SetCellValue(rowIndex, colIndex, row.GetCellValue(cell.CellIndex));
+                    foreach (var col in result.Interface.Items)
+                    {
+                        var info = row.GetCell(col.ItemIndex);
+                        var rowIndex = 1 + FROM_ROW_INDEX + row.RowIndex;
+                        var colIndex = FROM_COL_INDEX + info.CellIndex;
+                        var cell = sheet.GetCell(rowIndex, colIndex);
+                        cell.SetCellValue(info.Value);
+                        FormatCell(wb, cell, info);
+                    }
+                }
+                //header
+                foreach (var info in result.Interface.Items)
+                {
+                    var rowIndex = FROM_ROW_INDEX;
+                    var colIndex = FROM_COL_INDEX + info.ItemIndex;
+                    var cell = sheet.GetCell(rowIndex, colIndex);
+                    cell.SetCellValue(info.ItemName);
+                    FormatHeader(wb, cell, info);
+                }
 
-                    var sheetCell = sheet.GetCellAt(rowIndex, colIndex);
-                    SetBorder(sheetCell);
-                    SetBackgroundColor(sheetCell, cell.Background);
+                //data
+                foreach (var row in result.NewFileContent.Rows)
+                {
+                    foreach (var col in result.Interface.Items)
+                    {
+                        var info = row.GetCell(col.ItemIndex);
+                        var rowIndex = 1 + FROM_ROW_INDEX + row.RowIndex;
+                        var colIndex = FROM_COL_INDEX + info.CellIndex + colCount + SEP_COL_COUNT;
+                        var cell = sheet.GetCell(rowIndex, colIndex);
+                        cell.SetCellValue(info.Value);
+                        FormatCell(wb, cell, info);
+                    }
+                }
+                //header
+                foreach (var info in result.Interface.Items)
+                {
+                    var rowIndex = FROM_ROW_INDEX;
+                    var colIndex = FROM_COL_INDEX + info.ItemIndex + colCount + SEP_COL_COUNT;
+                    var cell = sheet.GetCell(rowIndex, colIndex);
+                    cell.SetCellValue(info.ItemName);
+                    FormatHeader(wb, cell, info);
+                }
+
+                using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    wb.Write(fs);
                 }
             }
-
-            //header
-            foreach (var col in result.Interface.Items)
-            {
-                var rowIndex = FROM_ROW_INDEX;
-                var colIndex = FROM_COL_INDEX + col.ItemIndex + colCount + SEP_COL_COUNT;
-                sheet.SetCellValue(rowIndex, colIndex, col.ItemName);
-
-                var sheetCell = sheet.GetCellAt(rowIndex, colIndex);
-                SetBorder(sheetCell);
-                SetBackgroundColor(sheetCell, col.Background);
-            }
-            //data
-            foreach (var row in result.NewFileContent.Rows)
-            {
-                foreach (var col in result.Interface.Items)
-                {
-                    var cell = row.GetCell(col.ItemIndex);
-                    var rowIndex = 1 + FROM_ROW_INDEX + row.RowIndex;
-                    var colIndex = FROM_COL_INDEX + cell.CellIndex + colCount + SEP_COL_COUNT;
-                    sheet.SetCellValue(rowIndex, colIndex, row.GetCellValue(cell.CellIndex));
-
-                    var sheetCell = sheet.GetCellAt(rowIndex, colIndex);
-                    SetBorder(sheetCell);
-                    SetBackgroundColor(sheetCell, cell.Background);
-                }
-            }
-
-            wb.SaveAs(filePath);
-            wb.Close();
         }
 
         private static bool IsInterfaceSheet(string a1Value)
@@ -236,22 +241,26 @@ namespace DataFileComparer.Commons
             return a1Value != null && a1Value.Contains("基本設計書");
         }
 
-        private static string GetColorCode(Brush brush)
+        private static void FormatHeader(XSSFWorkbook wb, ICell cell, DataFileInterfaceItem info)
         {
-            return "#" + brush.ToString().Substring(3);
+            cell.CellStyle = wb.CreateCellStyle();
+            cell.CellStyle.BorderBottom = BorderStyle.Medium;
+            cell.CellStyle.BorderTop = BorderStyle.Medium;
+            cell.CellStyle.BorderLeft = BorderStyle.Medium;
+            cell.CellStyle.BorderRight = BorderStyle.Medium;
+            cell.CellStyle.FillPattern = FillPattern.SolidForeground;
+            cell.CellStyle.FillForegroundColor = info.HSSFBackground;
         }
 
-        private static void SetBorder(Cell cell)
+        private static void FormatCell(XSSFWorkbook wb, ICell cell, DataFileContentCell info)
         {
-            cell.Style.BottomBorder.Type = BorderType.Medium;
-            cell.Style.TopBorder.Type = BorderType.Medium;
-            cell.Style.LeftBorder.Type = BorderType.Medium;
-            cell.Style.RightBorder.Type = BorderType.Medium;
-        }
-
-        private static void SetBackgroundColor(Cell cell, Brush brush)
-        {
-            cell.Style.BackgroundColor = GetColorCode(brush);
+            cell.CellStyle = wb.CreateCellStyle();
+            cell.CellStyle.BorderBottom = BorderStyle.Thin;
+            cell.CellStyle.BorderTop = BorderStyle.Thin;
+            cell.CellStyle.BorderLeft = BorderStyle.Thin;
+            cell.CellStyle.BorderRight = BorderStyle.Thin;
+            cell.CellStyle.FillPattern = FillPattern.SolidForeground;
+            cell.CellStyle.FillForegroundColor = info.HSSFBackground;
         }
     }
 }
